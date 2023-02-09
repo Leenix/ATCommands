@@ -16,11 +16,13 @@
 
 ATCommands::ATCommands() {}
 
-void ATCommands::begin(Stream *stream, const at_command_t *commands, uint32_t size, const uint16_t bufferSize, const char *terminator) {
+void ATCommands::begin(Stream *stream, const at_command_t *commands, uint32_t size, const uint16_t bufferSize, const char *terminator, at_action_t pre_action, at_action_t post_action) {
     this->serial = stream;
     this->term = terminator;
     this->bufferString.reserve(bufferSize);
     this->bufferSize = bufferSize;
+    this->pre_response_action = pre_action;
+    this->post_response_action = post_action;
 
     registerCommands(commands, size);
     clearBuffer();
@@ -248,8 +250,12 @@ AT_COMMANDS_ERRORS ATCommands::update() {
                 return AT_COMMANDS_ERROR_SYNTAX;
             }
 
+            if (this->pre_response_action != nullptr) this->pre_response_action();
+
             // process the command
             processCommand();
+
+            if (this->post_response_action != nullptr) this->post_response_action();
 
             // finally clear the buffer
             clearBuffer();

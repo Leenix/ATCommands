@@ -14,7 +14,7 @@
 */
 #include <Arduino.h>
 
-//#define AT_COMMANDS_DEBUG
+// #define AT_COMMANDS_DEBUG
 
 #ifndef __AT_COMMANDS_H__
 #define __AT_COMMANDS_H__
@@ -49,8 +49,9 @@ typedef struct {
     bool (*at_testCmd)(ATCommands *);   // TEST command function pointer
     bool (*at_readCmd)(ATCommands *);   // READ command function pointer
     bool (*at_writeCmd)(ATCommands *);  // WRITE command function pointer
-
 } at_command_t;
+
+typedef void (*at_action_t)();
 
 typedef struct {
     String buffer;  // the working buffer
@@ -92,12 +93,15 @@ class ATCommands {
 
    public:
     Stream *serial;
+    at_action_t pre_response_action = nullptr;
+    at_action_t post_response_action = nullptr;
 
     // initialize
     ATCommands();
 
     // register serial port, commands and buffers
-    void begin(Stream *serial, const at_command_t *commands, uint32_t size, const uint16_t bufferSize, const char *terminator = "\n");
+    void begin(Stream *serial, const at_command_t *commands, uint32_t size, const uint16_t bufferSize, const char *terminator = "\n", at_action_t pre_action = nullptr,
+               at_action_t post_action = nullptr);
 
     // command parsing
     String command;  // the command (eg: +TEST in AT+TEST)
